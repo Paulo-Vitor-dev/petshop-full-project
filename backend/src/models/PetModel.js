@@ -1,49 +1,40 @@
-const db = require("../config/database");
+const connection = require("../config/database");
 
-class PetModel {
-  static async getAll() {
-    const [rows] = await db.query("SELECT * FROM pets");
-    return rows;
-  }
+const getAllPets = (callback) => {
+  const query = "SELECT * FROM pets";
 
-  static async getById(id) {
-    const [rows] = await db.query(
-      "SELECT * FROM pets WHERE id = ?",
-      [id]
-    );
+  connection.query(query, callback);
+};
 
-    return rows[0];
-  }
+const getPetById = (id, callback) => {
+  const query = "SELECT * FROM pets WHERE id = ?";
 
-  static async create(pet) {
-    const {
-      name,
-      species,
-      sex,
-      weight,
-      observations,
-      client_id,
-    } = pet;
+  connection.query(query, [id], callback);
+};
 
-    const [result] = await db.query(
-      `INSERT INTO pets
-      (name, species, sex, weight, observations, client_id)
-      VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        name,
-        species,
-        sex,
-        weight,
-        observations,
-        client_id,
-      ]
-    );
+const createPet = (pet, callback) => {
+  const query = `
+    INSERT INTO pets
+    (name, species, sex, weight, observations, client_id)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
 
-    return {
-      id: result.insertId,
-      ...pet,
-    };
-  }
-}
+  connection.query(
+    query,
+    [
+      pet.name,
+      pet.species,
+      pet.sex,
+      pet.weight,
+      pet.observations,
+      pet.client_id,
+    ],
+    callback
+  );
+};
 
-module.exports = PetModel;
+module.exports = {
+  getAllPets,
+  getPetById,
+  createPet,
+};

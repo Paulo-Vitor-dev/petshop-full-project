@@ -18,6 +18,7 @@ const createAppointment = (appointmentData, callback) => {
         const error = new Error(
             "Pet, serviço e data do agendamento são obrigatórios"
         );
+
         error.statusCode = 400;
 
         return callback(error);
@@ -30,6 +31,7 @@ const createAppointment = (appointmentData, callback) => {
         const error = new Error(
             "Status de pagamento inválido"
         );
+
         error.statusCode = 400;
 
         return callback(error);
@@ -42,6 +44,7 @@ const createAppointment = (appointmentData, callback) => {
 
         if (pets.length === 0) {
             const petError = new Error("Pet não encontrado");
+
             petError.statusCode = 404;
 
             return callback(petError);
@@ -58,19 +61,43 @@ const createAppointment = (appointmentData, callback) => {
                     const serviceError = new Error(
                         "Serviço não encontrado"
                     );
+
                     serviceError.statusCode = 404;
 
                     return callback(serviceError);
                 }
 
-                AppointmentModel.createAppointment(
-                    {
-                        pet_id,
-                        service_id,
-                        appointment_date,
-                        payment_status,
-                    },
-                    callback
+                const duration = services[0].duration;
+
+                AppointmentModel.checkPetScheduleConflict(
+                    pet_id,
+                    appointment_date,
+                    duration,
+                    (error, conflicts) => {
+                        if (error) {
+                            return callback(error);
+                        }
+
+                        if (conflicts.length > 0) {
+                            const conflictError = new Error(
+                                "O pet já possui um agendamento neste período"
+                            );
+
+                            conflictError.statusCode = 409;
+
+                            return callback(conflictError);
+                        }
+
+                        AppointmentModel.createAppointment(
+                            {
+                                pet_id,
+                                service_id,
+                                appointment_date,
+                                payment_status,
+                            },
+                            callback
+                        );
+                    }
                 );
             }
         );
@@ -78,115 +105,175 @@ const createAppointment = (appointmentData, callback) => {
 };
 
 const getAppointmentById = (id, callback) => {
-  AppointmentModel.getAppointmentById(id, (error, appointments) => {
-    if (error) {
-      return callback(error);
-    }
+    AppointmentModel.getAppointmentById(
+        id,
+        (error, appointments) => {
+            if (error) {
+                return callback(error);
+            }
 
-    if (appointments.length === 0) {
-      const appointmentError = new Error("Agendamento não encontrado");
-      appointmentError.statusCode = 404;
+            if (appointments.length === 0) {
+                const appointmentError = new Error(
+                    "Agendamento não encontrado"
+                );
 
-      return callback(appointmentError);
-    }
+                appointmentError.statusCode = 404;
 
-    callback(null, appointments[0]);
-  });
+                return callback(appointmentError);
+            }
+
+            callback(null, appointments[0]);
+        }
+    );
 };
 
 const updateAppointment = (id, appointmentData, callback) => {
-  const {
-    pet_id,
-    service_id,
-    appointment_date,
-    payment_status,
-  } = appointmentData;
-
-  const validPaymentStatuses = ["pending", "paid"];
-
-  if (!validPaymentStatuses.includes(payment_status)) {
-    const statusError = new Error("Status de pagamento inválido");
-    statusError.statusCode = 400;
-
-    return callback(statusError);
-  }
-
-  AppointmentModel.getAppointmentById(id, (error, appointments) => {
-    if (error) {
-      return callback(error);
-    }
-
-    if (appointments.length === 0) {
-      const appointmentError = new Error(
-        "Agendamento não encontrado"
-      );
-      appointmentError.statusCode = 404;
-
-      return callback(appointmentError);
-    }
-
-    PetModel.getPetById(pet_id, (error, pets) => {
-      if (error) {
-        return callback(error);
-      }
-
-      if (pets.length === 0) {
-        const petError = new Error("Pet não encontrado");
-        petError.statusCode = 404;
-
-        return callback(petError);
-      }
-
-      PetShopServiceModel.getServiceById(
+    const {
+        pet_id,
         service_id,
-        (error, services) => {
-          if (error) {
-            return callback(error);
-          }
+        appointment_date,
+        payment_status,
+    } = appointmentData;
 
-          if (services.length === 0) {
-            const serviceError = new Error(
-              "Serviço não encontrado"
+    if (!pet_id || !service_id || !appointment_date) {
+        const error = new Error(
+            "Pet, serviço e data do agendamento são obrigatórios"
+        );
+
+        error.statusCode = 400;
+
+        return callback(error);
+    }
+
+    const validPaymentStatuses = ["pending", "paid"];
+
+    if (!validPaymentStatuses.includes(payment_status)) {
+        const statusError = new Error(
+            "Status de pagamento inválido"
+        );
+
+        statusError.statusCode = 400;
+
+        return callback(statusError);
+    }
+
+    AppointmentModel.getAppointmentById(
+        id,
+        (error, appointments) => {
+            if (error) {
+                return callback(error);
+            }
+
+            if (appointments.length === 0) {
+                const appointmentError = new Error(
+                    "Agendamento não encontrado"
+                );
+
+                appointmentError.statusCode = 404;
+
+                return callback(appointmentError);
+            }
+
+            PetModel.getPetById(
+                pet_id,
+                (error, pets) => {
+                    if (error) {
+                        return callback(error);
+                    }
+
+                    if (pets.length === 0) {
+                        const petError = new Error(
+                            "Pet não encontrado"
+                        );
+
+                        petError.statusCode = 404;
+
+                        return callback(petError);
+                    }
+
+                    PetShopServiceModel.getServiceById(
+                        service_id,
+                        (error, services) => {
+                            if (error) {
+                                return callback(error);
+                            }
+
+                            if (services.length === 0) {
+                                const serviceError = new Error(
+                                    "Serviço não encontrado"
+                                );
+
+                                serviceError.statusCode = 404;
+
+                                return callback(serviceError);
+                            }
+
+                            const duration = services[0].duration;
+
+                            AppointmentModel.checkPetScheduleConflictForUpdate(
+                                id,
+                                pet_id,
+                                appointment_date,
+                                duration,
+                                (error, conflicts) => {
+                                    if (error) {
+                                        return callback(error);
+                                    }
+
+                                    if (conflicts.length > 0) {
+                                        const conflictError = new Error(
+                                            "O pet já possui um agendamento neste período"
+                                        );
+
+                                        conflictError.statusCode = 409;
+
+                                        return callback(conflictError);
+                                    }
+
+                                    AppointmentModel.updateAppointment(
+                                        id,
+                                        {
+                                            pet_id,
+                                            service_id,
+                                            appointment_date,
+                                            payment_status,
+                                        },
+                                        callback
+                                    );
+                                }
+                            );
+                        }
+                    );
+                }
             );
-            serviceError.statusCode = 404;
-
-            return callback(serviceError);
-          }
-
-          AppointmentModel.updateAppointment(
-            id,
-            {
-              pet_id,
-              service_id,
-              appointment_date,
-              payment_status,
-            },
-            callback
-          );
         }
-      );
-    });
-  });
+    );
 };
 
 const deleteAppointment = (id, callback) => {
-  AppointmentModel.getAppointmentById(id, (error, appointments) => {
-    if (error) {
-      return callback(error);
-    }
+    AppointmentModel.getAppointmentById(
+        id,
+        (error, appointments) => {
+            if (error) {
+                return callback(error);
+            }
 
-    if (appointments.length === 0) {
-      const appointmentError = new Error(
-        "Agendamento não encontrado"
-      );
+            if (appointments.length === 0) {
+                const appointmentError = new Error(
+                    "Agendamento não encontrado"
+                );
 
-      appointmentError.statusCode = 404;
+                appointmentError.statusCode = 404;
 
-      return callback(appointmentError);
-    }
+                return callback(appointmentError);
+            }
 
-    AppointmentModel.deleteAppointment(id, callback);
-  });
+            AppointmentModel.deleteAppointment(
+                id,
+                callback
+            );
+        }
+    );
 };
 
 module.exports = {
@@ -195,4 +282,4 @@ module.exports = {
     createAppointment,
     updateAppointment,
     deleteAppointment,
-};  
+};

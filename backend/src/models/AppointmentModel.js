@@ -122,10 +122,83 @@ const deleteAppointment = (id, callback) => {
   connection.query(query, [id], callback);
 };
 
+const checkPetScheduleConflict = (
+  pet_id,
+  appointment_date,
+  duration,
+  callback
+) => {
+  const query = `
+    SELECT appointments.id
+    FROM appointments
+    INNER JOIN services
+      ON appointments.service_id = services.id
+    WHERE appointments.pet_id = ?
+      AND ? < DATE_ADD(
+        appointments.appointment_date,
+        INTERVAL services.duration MINUTE
+      )
+      AND DATE_ADD(
+        ?,
+        INTERVAL ? MINUTE
+      ) > appointments.appointment_date
+  `;
+
+  connection.query(
+    query,
+    [
+      pet_id,
+      appointment_date,
+      appointment_date,
+      duration,
+    ],
+    callback
+  );
+};
+
+const checkPetScheduleConflictForUpdate = (
+    id,
+    pet_id,
+    appointment_date,
+    duration,
+    callback
+) => {
+    const query = `
+        SELECT appointments.id
+        FROM appointments
+        INNER JOIN services
+            ON appointments.service_id = services.id
+        WHERE appointments.pet_id = ?
+          AND appointments.id != ?
+          AND ? < DATE_ADD(
+              appointments.appointment_date,
+              INTERVAL services.duration MINUTE
+          )
+          AND DATE_ADD(
+              ?,
+              INTERVAL ? MINUTE
+          ) > appointments.appointment_date
+    `;
+
+    connection.query(
+        query,
+        [
+            pet_id,
+            id,
+            appointment_date,
+            appointment_date,
+            duration,
+        ],
+        callback
+    );
+};
+
 module.exports = {
     getAllAppointments,
     getAppointmentById,
     createAppointment,
     updateAppointment,
     deleteAppointment,
+    checkPetScheduleConflict,
+    checkPetScheduleConflictForUpdate,
 };

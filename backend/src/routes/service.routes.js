@@ -6,5 +6,7 @@ const PetShopServiceController = require("../controllers/PetShopServiceControlle
 router.get("/", PetShopServiceController.getAllServices);
 router.get("/:id", PetShopServiceController.getServiceById);
 router.post("/", PetShopServiceController.createService);
+router.put("/:id", PetShopServiceController.updateService);
+router.delete("/:id", PetShopServiceController.deleteService);
 
 module.exports = router;

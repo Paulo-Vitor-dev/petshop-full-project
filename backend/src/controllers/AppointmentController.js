@@ -34,7 +34,66 @@ const createAppointment = (req, res) => {
   );
 };
 
+const getAppointmentById = (req, res) => {
+  const { id } = req.params;
+
+  AppointmentService.getAppointmentById(
+    id,
+    (error, appointment) => {
+      if (error) {
+        return res.status(error.statusCode || 500).json({
+          error: error.message,
+        });
+      }
+
+      return res.status(200).json(appointment);
+    }
+  );
+};
+
+const updateAppointment = (req, res) => {
+  const { id } = req.params;
+  const appointmentData = req.body;
+
+  AppointmentService.updateAppointment(
+    id,
+    appointmentData,
+    (error) => {
+      if (error) {
+        return res.status(error.statusCode || 500).json({
+          error: error.message,
+        });
+      }
+
+      return res.status(200).json({
+        message: "Agendamento atualizado com sucesso",
+        id: Number(id),
+        ...appointmentData,
+      });
+    }
+  );
+};
+
+const deleteAppointment = (req, res) => {
+  const { id } = req.params;
+
+  AppointmentService.deleteAppointment(id, (error) => {
+    if (error) {
+      return res.status(error.statusCode || 500).json({
+        error: error.message,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Agendamento excluído com sucesso",
+    });
+  });
+};
+
 module.exports = {
     getAllAppointments,
+    getAppointmentById,
     createAppointment,
+    updateAppointment,
+    deleteAppointment,
 };

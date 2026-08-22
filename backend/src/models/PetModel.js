@@ -33,8 +33,46 @@ const createPet = (pet, callback) => {
   );
 };
 
+const updatePet = (id, pet, callback) => {
+  const query = `
+    UPDATE pets
+    SET name = ?,
+        species = ?,
+        sex = ?,
+        weight = ?,
+        observations = ?,
+        client_id = ?
+    WHERE id = ?
+  `;
+
+  connection.query(
+    query,
+    [
+      pet.name,
+      pet.species,
+      pet.sex,
+      pet.weight,
+      pet.observations,
+      pet.client_id,
+      id,
+    ],
+    callback
+  );
+};
+
+const deletePet = (id, callback) => {
+  const query = `
+    DELETE FROM pets
+    WHERE id = ?
+  `;
+
+  connection.query(query, [id], callback);
+};
+
 module.exports = {
   getAllPets,
   getPetById,
   createPet,
+  updatePet,
+  deletePet,
 };

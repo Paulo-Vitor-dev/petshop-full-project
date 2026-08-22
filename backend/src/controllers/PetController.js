@@ -49,8 +49,45 @@ const createPet = (req, res) => {
   });
 };
 
+const updatePet = (req, res) => {
+  const { id } = req.params;
+  const petData = req.body;
+
+  PetService.updatePet(id, petData, (error, result) => {
+    if (error) {
+      return res.status(error.statusCode || 500).json({
+        error: error.message,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Pet atualizado com sucesso",
+      id: Number(id),
+      ...petData,
+    });
+  });
+};
+
+const deletePet = (req, res) => {
+  const { id } = req.params;
+
+  PetService.deletePet(id, (error) => {
+    if (error) {
+      return res.status(error.statusCode || 500).json({
+        error: error.message,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Pet excluído com sucesso",
+    });
+  });
+};
+
 module.exports = {
   getAllPets,
   getPetById,
   createPet,
+  updatePet,
+  deletePet,
 };

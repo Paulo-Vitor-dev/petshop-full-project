@@ -73,7 +73,19 @@ const validateAppointmentEndTime = (appointment_date, duration) => {
     return null;
 };
 
-const getAllAppointments = (callback) => {
+const getAllAppointments = (filters, callback) => {
+    const hasFilters =
+        filters.date ||
+        filters.pet_id ||
+        filters.payment_status;
+
+    if (hasFilters) {
+        return AppointmentModel.getFilteredAppointments(
+            filters,
+            callback
+        );
+    }
+
     AppointmentModel.getAllAppointments(callback);
 };
 

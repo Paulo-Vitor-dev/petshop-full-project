@@ -35,6 +35,60 @@ const getAllAppointments = (callback) => {
     connection.query(query, callback);
 };
 
+const getFilteredAppointments = (filters, callback) => {
+    let query = `
+        SELECT
+            appointments.id,
+            appointments.appointment_date,
+            appointments.payment_status,
+
+            pets.id AS pet_id,
+            pets.name AS pet_name,
+
+            clients.id AS client_id,
+            clients.name AS client_name,
+
+            services.id AS service_id,
+            services.name AS service_name,
+            services.price,
+            services.duration
+
+        FROM appointments
+
+        INNER JOIN pets
+            ON appointments.pet_id = pets.id
+
+        INNER JOIN clients
+            ON pets.client_id = clients.id
+
+        INNER JOIN services
+            ON appointments.service_id = services.id
+
+        WHERE 1 = 1
+    `;
+
+    const values = [];
+
+    if (filters.date) {
+        query += ` AND DATE(appointments.appointment_date) = ?`;
+        values.push(filters.date);
+    }
+
+    if (filters.pet_id) {
+        query += ` AND appointments.pet_id = ?`;
+        values.push(filters.pet_id);
+    }
+
+    if (filters.payment_status) {
+        query += ` AND appointments.payment_status = ?`;
+        values.push(filters.payment_status);
+    }
+
+    query += ` ORDER BY appointments.appointment_date ASC`;
+
+    connection.query(query, values, callback);
+};
+
 const createAppointment = (appointment, callback) => {
     const query = `
         INSERT INTO appointments
@@ -201,4 +255,5 @@ module.exports = {
     deleteAppointment,
     checkPetScheduleConflict,
     checkPetScheduleConflictForUpdate,
+    getFilteredAppointments,
 };

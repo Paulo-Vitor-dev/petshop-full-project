@@ -1,15 +1,24 @@
 const AppointmentService = require("../services/AppointmentService");
 
 const getAllAppointments = (req, res) => {
-    AppointmentService.getAllAppointments((error, appointments) => {
-        if (error) {
-            return res.status(500).json({
-                error: error.message,
-            });
-        }
+    const filters = {
+        date: req.query.date,
+        pet_id: req.query.pet_id,
+        payment_status: req.query.payment_status,
+    };
 
-        return res.status(200).json(appointments);
-    });
+    AppointmentService.getAllAppointments(
+        filters,
+        (error, appointments) => {
+            if (error) {
+                return res.status(error.statusCode || 500).json({
+                    error: error.message,
+                });
+            }
+
+            return res.status(200).json(appointments);
+        }
+    );
 };
 
 const createAppointment = (req, res) => {

@@ -23,6 +23,18 @@ const validateAppointmentDate = (appointment_date) => {
         return error;
     }
 
+    const dayOfWeek = appointmentDate.getDay();
+
+    if (dayOfWeek === 0) {
+        const error = new Error(
+            "Não realizamos atendimentos aos domingos"
+        );
+
+        error.statusCode = 400;
+
+        return error;
+    }
+
     const hour = appointmentDate.getHours();
 
     if (hour < 8 || hour >= 18) {

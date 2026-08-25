@@ -74,19 +74,73 @@ const validateAppointmentEndTime = (appointment_date, duration) => {
 };
 
 const getAllAppointments = (filters, callback) => {
+    const page = parseInt(filters.page) || 1;
+    const limit = parseInt(filters.limit) || 10;
+
+    if (page < 1 || limit < 1) {
+        const error = new Error(
+            "Página e limite devem ser maiores que zero"
+        );
+
+        error.statusCode = 400;
+
+        return callback(error);
+    }
+
+    const offset = (page - 1) * limit;
+
+    const pagination = {
+        limit,
+        offset,
+    };
+
     const hasFilters =
         filters.date ||
         filters.pet_id ||
         filters.payment_status;
 
+    const handleAppointments = (error, appointments) => {
+        if (error) {
+            return callback(error);
+        }
+
+        AppointmentModel.countAppointments(
+            filters,
+            (countError, result) => {
+                if (countError) {
+                    return callback(countError);
+                }
+
+                const total = result[0].total;
+                const totalPages = Math.ceil(total / limit);
+
+                callback(null, {
+                    data: appointments,
+                    pagination: {
+                        page,
+                        limit,
+                        total,
+                        totalPages,
+                    },
+                });
+            }
+        );
+    };
+
     if (hasFilters) {
         return AppointmentModel.getFilteredAppointments(
-            filters,
-            callback
+            {
+                ...filters,
+                ...pagination,
+            },
+            handleAppointments
         );
     }
 
-    AppointmentModel.getAllAppointments(callback);
+    AppointmentModel.getAllAppointments(
+        pagination,
+        handleAppointments
+    );
 };
 
 const createAppointment = (appointmentData, callback) => {

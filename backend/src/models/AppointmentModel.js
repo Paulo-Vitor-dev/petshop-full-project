@@ -1,7 +1,7 @@
 const connection = require("../config/database");
 
-const getAllAppointments = (callback) => {
-    const query = `
+const getAllAppointments = (pagination, callback) => {
+  const query = `
         SELECT
             appointments.id,
             appointments.appointment_date,
@@ -30,13 +30,22 @@ const getAllAppointments = (callback) => {
             ON appointments.service_id = services.id
 
         ORDER BY appointments.appointment_date ASC
+
+        LIMIT ? OFFSET ?
     `;
 
-    connection.query(query, callback);
+  connection.query(
+    query,
+    [
+      pagination.limit,
+      pagination.offset,
+    ],
+    callback
+  );
 };
 
 const getFilteredAppointments = (filters, callback) => {
-    let query = `
+  let query = `
         SELECT
             appointments.id,
             appointments.appointment_date,
@@ -67,45 +76,51 @@ const getFilteredAppointments = (filters, callback) => {
         WHERE 1 = 1
     `;
 
-    const values = [];
+  const values = [];
 
-    if (filters.date) {
-        query += ` AND DATE(appointments.appointment_date) = ?`;
-        values.push(filters.date);
-    }
+  if (filters.date) {
+    query += ` AND DATE(appointments.appointment_date) = ?`;
+    values.push(filters.date);
+  }
 
-    if (filters.pet_id) {
-        query += ` AND appointments.pet_id = ?`;
-        values.push(filters.pet_id);
-    }
+  if (filters.pet_id) {
+    query += ` AND appointments.pet_id = ?`;
+    values.push(filters.pet_id);
+  }
 
-    if (filters.payment_status) {
-        query += ` AND appointments.payment_status = ?`;
-        values.push(filters.payment_status);
-    }
+  if (filters.payment_status) {
+    query += ` AND appointments.payment_status = ?`;
+    values.push(filters.payment_status);
+  }
 
-    query += ` ORDER BY appointments.appointment_date ASC`;
+  query += `
+    ORDER BY appointments.appointment_date ASC
+    LIMIT ? OFFSET ?
+`;
 
-    connection.query(query, values, callback);
+  values.push(filters.limit);
+  values.push(filters.offset);
+
+  connection.query(query, values, callback);
 };
 
 const createAppointment = (appointment, callback) => {
-    const query = `
+  const query = `
         INSERT INTO appointments
         (pet_id, service_id, appointment_date, payment_status)
         VALUES (?, ?, ?, ?)
     `;
 
-    connection.query(
-        query,
-        [
-            appointment.pet_id,
-            appointment.service_id,
-            appointment.appointment_date,
-            appointment.payment_status || "pending",
-        ],
-        callback
-    );
+  connection.query(
+    query,
+    [
+      appointment.pet_id,
+      appointment.service_id,
+      appointment.appointment_date,
+      appointment.payment_status || "pending",
+    ],
+    callback
+  );
 };
 
 const getAppointmentById = (id, callback) => {
@@ -211,13 +226,13 @@ const checkPetScheduleConflict = (
 };
 
 const checkPetScheduleConflictForUpdate = (
-    id,
-    pet_id,
-    appointment_date,
-    duration,
-    callback
+  id,
+  pet_id,
+  appointment_date,
+  duration,
+  callback
 ) => {
-    const query = `
+  const query = `
         SELECT appointments.id
         FROM appointments
         INNER JOIN services
@@ -234,26 +249,54 @@ const checkPetScheduleConflictForUpdate = (
           ) > appointments.appointment_date
     `;
 
-    connection.query(
-        query,
-        [
-            pet_id,
-            id,
-            appointment_date,
-            appointment_date,
-            duration,
-        ],
-        callback
-    );
+  connection.query(
+    query,
+    [
+      pet_id,
+      id,
+      appointment_date,
+      appointment_date,
+      duration,
+    ],
+    callback
+  );
+};
+
+const countAppointments = (filters, callback) => {
+    let query = `
+        SELECT COUNT(*) AS total
+        FROM appointments
+        WHERE 1 = 1
+    `;
+
+    const values = [];
+
+    if (filters.date) {
+        query += ` AND DATE(appointments.appointment_date) = ?`;
+        values.push(filters.date);
+    }
+
+    if (filters.pet_id) {
+        query += ` AND appointments.pet_id = ?`;
+        values.push(filters.pet_id);
+    }
+
+    if (filters.payment_status) {
+        query += ` AND appointments.payment_status = ?`;
+        values.push(filters.payment_status);
+    }
+
+    connection.query(query, values, callback);
 };
 
 module.exports = {
-    getAllAppointments,
-    getAppointmentById,
-    createAppointment,
-    updateAppointment,
-    deleteAppointment,
-    checkPetScheduleConflict,
-    checkPetScheduleConflictForUpdate,
-    getFilteredAppointments,
+  getAllAppointments,
+  getAppointmentById,
+  createAppointment,
+  updateAppointment,
+  deleteAppointment,
+  checkPetScheduleConflict,
+  checkPetScheduleConflictForUpdate,
+  getFilteredAppointments,
+  countAppointments,
 };

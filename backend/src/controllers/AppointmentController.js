@@ -1,24 +1,26 @@
 const AppointmentService = require("../services/AppointmentService");
 
 const getAllAppointments = (req, res) => {
-    const filters = {
-        date: req.query.date,
-        pet_id: req.query.pet_id,
-        payment_status: req.query.payment_status,
-    };
+  const filters = {
+    date: req.query.date,
+    pet_id: req.query.pet_id,
+    payment_status: req.query.payment_status,
+    page: req.query.page,
+    limit: req.query.limit,
+  };
 
-    AppointmentService.getAllAppointments(
-        filters,
-        (error, appointments) => {
-            if (error) {
-                return res.status(error.statusCode || 500).json({
-                    error: error.message,
-                });
-            }
+  AppointmentService.getAllAppointments(
+    filters,
+    (error, appointments) => {
+      if (error) {
+        return res.status(error.statusCode || 500).json({
+          error: error.message,
+        });
+      }
 
-            return res.status(200).json(appointments);
-        }
-    );
+      return res.status(200).json(appointments);
+    }
+  );
 };
 
 const createAppointment = (req, res) => {
@@ -100,9 +102,9 @@ const deleteAppointment = (req, res) => {
 };
 
 module.exports = {
-    getAllAppointments,
-    getAppointmentById,
-    createAppointment,
-    updateAppointment,
-    deleteAppointment,
+  getAllAppointments,
+  getAppointmentById,
+  createAppointment,
+  updateAppointment,
+  deleteAppointment,
 };

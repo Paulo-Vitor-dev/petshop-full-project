@@ -2,6 +2,65 @@ const AppointmentModel = require("../models/AppointmentModel");
 const PetModel = require("../models/PetModel");
 const PetShopServiceModel = require("../models/PetShopServiceModel");
 
+const validateAppointmentDate = (appointment_date) => {
+    const appointmentDate = new Date(appointment_date);
+    const now = new Date();
+
+    if (Number.isNaN(appointmentDate.getTime())) {
+        const error = new Error("Data do agendamento inválida");
+        error.statusCode = 400;
+
+        return error;
+    }
+
+    if (appointmentDate <= now) {
+        const error = new Error(
+            "O agendamento deve ser realizado para uma data futura"
+        );
+
+        error.statusCode = 400;
+
+        return error;
+    }
+
+    const hour = appointmentDate.getHours();
+
+    if (hour < 8 || hour >= 18) {
+        const error = new Error(
+            "O horário do agendamento deve estar entre 08:00 e 18:00"
+        );
+
+        error.statusCode = 400;
+
+        return error;
+    }
+
+    return null;
+};
+
+const validateAppointmentEndTime = (appointment_date, duration) => {
+    const appointmentDate = new Date(appointment_date);
+
+    const endDate = new Date(
+        appointmentDate.getTime() + duration * 60 * 1000
+    );
+
+    const closingDate = new Date(appointmentDate);
+    closingDate.setHours(18, 0, 0, 0);
+
+    if (endDate > closingDate) {
+        const error = new Error(
+            "O atendimento deve terminar até às 18:00"
+        );
+
+        error.statusCode = 400;
+
+        return error;
+    }
+
+    return null;
+};
+
 const getAllAppointments = (callback) => {
     AppointmentModel.getAllAppointments(callback);
 };
@@ -22,6 +81,12 @@ const createAppointment = (appointmentData, callback) => {
         error.statusCode = 400;
 
         return callback(error);
+    }
+
+    const dateError = validateAppointmentDate(appointment_date);
+
+    if (dateError) {
+        return callback(dateError);
     }
 
     if (
@@ -68,6 +133,15 @@ const createAppointment = (appointmentData, callback) => {
                 }
 
                 const duration = services[0].duration;
+
+                const endTimeError = validateAppointmentEndTime(
+                    appointment_date,
+                    duration
+                );
+
+                if (endTimeError) {
+                    return callback(endTimeError);
+                }
 
                 AppointmentModel.checkPetScheduleConflict(
                     pet_id,
@@ -145,6 +219,12 @@ const updateAppointment = (id, appointmentData, callback) => {
         return callback(error);
     }
 
+    const dateError = validateAppointmentDate(appointment_date);
+
+    if (dateError) {
+        return callback(dateError);
+    }
+
     const validPaymentStatuses = ["pending", "paid"];
 
     if (!validPaymentStatuses.includes(payment_status)) {
@@ -209,6 +289,15 @@ const updateAppointment = (id, appointmentData, callback) => {
                             }
 
                             const duration = services[0].duration;
+
+                            const endTimeError = validateAppointmentEndTime(
+                                appointment_date,
+                                duration
+                            );
+
+                            if (endTimeError) {
+                                return callback(endTimeError);
+                            }
 
                             AppointmentModel.checkPetScheduleConflictForUpdate(
                                 id,

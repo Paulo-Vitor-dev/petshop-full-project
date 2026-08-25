@@ -74,17 +74,85 @@ const validateAppointmentEndTime = (appointment_date, duration) => {
 };
 
 const getAllAppointments = (filters, callback) => {
-    const page = parseInt(filters.page) || 1;
-    const limit = parseInt(filters.limit) || 10;
+    const page = filters.page ? Number(filters.page) : 1;
+    const limit = filters.limit ? Number(filters.limit) : 10;
 
-    if (page < 1 || limit < 1) {
+    if (
+        !Number.isInteger(page) ||
+        !Number.isInteger(limit) ||
+        page < 1 ||
+        limit < 1
+    ) {
         const error = new Error(
-            "Página e limite devem ser maiores que zero"
+            "Página e limite devem ser números inteiros maiores que zero"
         );
 
         error.statusCode = 400;
 
         return callback(error);
+    }
+
+    if (limit > 100) {
+        const error = new Error(
+            "O limite máximo por página é 100"
+        );
+
+        error.statusCode = 400;
+
+        return callback(error);
+    }
+
+    if (
+        filters.payment_status &&
+        !["pending", "paid"].includes(filters.payment_status)
+    ) {
+        const error = new Error(
+            "Status de pagamento inválido"
+        );
+
+        error.statusCode = 400;
+
+        return callback(error);
+    }
+
+    if (filters.pet_id) {
+        const petId = Number(filters.pet_id);
+
+        if (!Number.isInteger(petId) || petId < 1) {
+            const error = new Error(
+                "ID do pet inválido"
+            );
+
+            error.statusCode = 400;
+
+            return callback(error);
+        }
+    }
+
+    if (filters.date) {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+        if (!dateRegex.test(filters.date)) {
+            const error = new Error(
+                "A data deve estar no formato YYYY-MM-DD"
+            );
+
+            error.statusCode = 400;
+
+            return callback(error);
+        }
+
+        const date = new Date(`${filters.date}T00:00:00`);
+
+        if (Number.isNaN(date.getTime())) {
+            const error = new Error(
+                "Data inválida"
+            );
+
+            error.statusCode = 400;
+
+            return callback(error);
+        }
     }
 
     const offset = (page - 1) * limit;

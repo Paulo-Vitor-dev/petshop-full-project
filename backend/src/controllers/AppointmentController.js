@@ -126,6 +126,31 @@ const updateAppointmentStatus = (req, res) => {
     );
 };
 
+const updatePaymentStatus = (req, res) => {
+    const { id } = req.params;
+    const { payment_status } = req.body;
+
+    AppointmentService.updatePaymentStatus(
+        id,
+        payment_status,
+        (error) => {
+            if (error) {
+                return res.status(
+                    error.statusCode || 500
+                ).json({
+                    error: error.message,
+                });
+            }
+
+            return res.status(200).json({
+                message: "Status do pagamento atualizado com sucesso",
+                id: Number(id),
+                payment_status,
+            });
+        }
+    );
+};
+
 module.exports = {
   getAllAppointments,
   getAppointmentById,
@@ -133,4 +158,5 @@ module.exports = {
   updateAppointment,
   deleteAppointment,
   updateAppointmentStatus,
+  updatePaymentStatus,
 };

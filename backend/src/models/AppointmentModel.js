@@ -312,6 +312,24 @@ const updateAppointmentStatus = (
     );
 };
 
+const updatePaymentStatus = (
+    id,
+    payment_status,
+    callback
+) => {
+    const query = `
+        UPDATE appointments
+        SET payment_status = ?
+        WHERE id = ?
+    `;
+
+    connection.query(
+        query,
+        [payment_status, id],
+        callback
+    );
+};
+
 module.exports = {
   getAllAppointments,
   getAppointmentById,
@@ -323,4 +341,5 @@ module.exports = {
   getFilteredAppointments,
   countAppointments,
   updateAppointmentStatus,
+  updatePaymentStatus,
 };

@@ -606,6 +606,80 @@ const updateAppointmentStatus = (
     );
 };
 
+const updatePaymentStatus = (
+    id,
+    payment_status,
+    callback
+) => {
+    const validPaymentStatuses = [
+        "pending",
+        "paid"
+    ];
+
+    if (!validPaymentStatuses.includes(payment_status)) {
+        const error = new Error(
+            "Status de pagamento inválido"
+        );
+
+        error.statusCode = 400;
+
+        return callback(error);
+    }
+
+    AppointmentModel.getAppointmentById(
+        id,
+        (error, appointments) => {
+            if (error) {
+                return callback(error);
+            }
+
+            if (appointments.length === 0) {
+                const appointmentError = new Error(
+                    "Agendamento não encontrado"
+                );
+
+                appointmentError.statusCode = 404;
+
+                return callback(appointmentError);
+            }
+
+            const currentPaymentStatus =
+                appointments[0].payment_status;
+
+            if (
+                currentPaymentStatus === "paid" &&
+                payment_status === "pending"
+            ) {
+                const paymentError = new Error(
+                    "Não é possível alterar um pagamento já confirmado para pendente"
+                );
+
+                paymentError.statusCode = 409;
+
+                return callback(paymentError);
+            }
+
+            if (
+                currentPaymentStatus === payment_status
+            ) {
+                const paymentError = new Error(
+                    `O pagamento já está com status ${payment_status}`
+                );
+
+                paymentError.statusCode = 409;
+
+                return callback(paymentError);
+            }
+
+            AppointmentModel.updatePaymentStatus(
+                id,
+                payment_status,
+                callback
+            );
+        }
+    );
+};
+
 module.exports = {
     getAllAppointments,
     getAppointmentById,
@@ -613,4 +687,5 @@ module.exports = {
     updateAppointment,
     deleteAppointment,
     updateAppointmentStatus,
+    updatePaymentStatus,
 };

@@ -12,5 +12,9 @@ router.patch(
     "/:id/status",
     AppointmentController.updateAppointmentStatus
 );
+router.patch(
+    "/:id/payment",
+    AppointmentController.updatePaymentStatus
+);
 
 module.exports = router;

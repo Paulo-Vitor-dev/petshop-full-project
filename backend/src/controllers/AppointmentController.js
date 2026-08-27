@@ -151,6 +151,25 @@ const updatePaymentStatus = (req, res) => {
     );
 };
 
+const getDailyAgenda = (req, res) => {
+    const { date } = req.query;
+
+    AppointmentService.getDailyAgenda(
+        date,
+        (error, agenda) => {
+            if (error) {
+                return res.status(
+                    error.statusCode || 500
+                ).json({
+                    error: error.message,
+                });
+            }
+
+            return res.status(200).json(agenda);
+        }
+    );
+};
+
 module.exports = {
   getAllAppointments,
   getAppointmentById,
@@ -159,4 +178,5 @@ module.exports = {
   deleteAppointment,
   updateAppointmentStatus,
   updatePaymentStatus,
+  getDailyAgenda,
 };

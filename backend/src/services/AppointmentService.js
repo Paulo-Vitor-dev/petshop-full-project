@@ -680,6 +680,78 @@ const updatePaymentStatus = (
     );
 };
 
+const getDailyAgenda = (date, callback) => {
+    if (!date) {
+        const error = new Error(
+            "A data da agenda é obrigatória"
+        );
+
+        error.statusCode = 400;
+
+        return callback(error);
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+    if (!dateRegex.test(date)) {
+        const error = new Error(
+            "A data deve estar no formato YYYY-MM-DD"
+        );
+
+        error.statusCode = 400;
+
+        return callback(error);
+    }
+
+    AppointmentModel.getDailyAgenda(
+        date,
+        (error, appointments) => {
+            if (error) {
+                return callback(error);
+            }
+
+            const agenda = appointments.map(
+                (appointment) => {
+                    const appointmentDate =
+                        new Date(
+                            appointment.appointment_date
+                        );
+
+                    const time =
+                        appointmentDate
+                            .toLocaleTimeString(
+                                "pt-BR",
+                                {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                }
+                            );
+
+                    return {
+                        id: appointment.id,
+                        time,
+                        pet: appointment.pet_name,
+                        client: appointment.client_name,
+                        service: appointment.service_name,
+                        duration: appointment.duration,
+                        price: appointment.price,
+                        payment_status:
+                            appointment.payment_status,
+                        appointment_status:
+                            appointment.appointment_status,
+                    };
+                }
+            );
+
+            callback(null, {
+                date,
+                total: agenda.length,
+                appointments: agenda,
+            });
+        }
+    );
+};
+
 module.exports = {
     getAllAppointments,
     getAppointmentById,
@@ -688,4 +760,5 @@ module.exports = {
     deleteAppointment,
     updateAppointmentStatus,
     updatePaymentStatus,
+    getDailyAgenda,
 };

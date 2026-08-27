@@ -1,20 +1,48 @@
 const express = require("express");
 const router = express.Router();
 
-const AppointmentController = require("../controllers/AppointmentController");
+const AppointmentController = require(
+    "../controllers/AppointmentController"
+);
 
-router.get("/", AppointmentController.getAllAppointments);
-router.post("/", AppointmentController.createAppointment);
-router.get("/:id", AppointmentController.getAppointmentById);
-router.put("/:id", AppointmentController.updateAppointment);
-router.delete("/:id", AppointmentController.deleteAppointment);
+router.get(
+    "/",
+    AppointmentController.getAllAppointments
+);
+
+router.get(
+    "/agenda",
+    AppointmentController.getDailyAgenda
+);
+
+router.get(
+    "/:id",
+    AppointmentController.getAppointmentById
+);
+
+router.post(
+    "/",
+    AppointmentController.createAppointment
+);
+
+router.put(
+    "/:id",
+    AppointmentController.updateAppointment
+);
+
 router.patch(
     "/:id/status",
     AppointmentController.updateAppointmentStatus
 );
+
 router.patch(
     "/:id/payment",
     AppointmentController.updatePaymentStatus
+);
+
+router.delete(
+    "/:id",
+    AppointmentController.deleteAppointment
 );
 
 module.exports = router;

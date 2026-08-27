@@ -549,6 +549,54 @@ const updateAppointmentStatus = (
                 return callback(appointmentError);
             }
 
+            const currentStatus =
+                appointments[0].appointment_status;
+
+            if (
+                currentStatus === "completed" ||
+                currentStatus === "cancelled"
+            ) {
+                const statusError = new Error(
+                    "Não é possível alterar um agendamento finalizado ou cancelado"
+                );
+
+                statusError.statusCode = 409;
+
+                return callback(statusError);
+            }
+
+            if (
+                currentStatus === "scheduled" &&
+                appointment_status === "scheduled"
+            ) {
+                const statusError = new Error(
+                    "O agendamento já está com status scheduled"
+                );
+
+                statusError.statusCode = 409;
+
+                return callback(statusError);
+            }
+
+            const appointmentDate = new Date(
+                appointments[0].appointment_date
+            );
+
+            const now = new Date();
+
+            if (
+                appointment_status === "completed" &&
+                appointmentDate > now
+            ) {
+                const dateError = new Error(
+                    "Não é possível concluir um agendamento antes do horário do atendimento"
+                );
+
+                dateError.statusCode = 409;
+
+                return callback(dateError);
+            }
+
             AppointmentModel.updateAppointmentStatus(
                 id,
                 appointment_status,

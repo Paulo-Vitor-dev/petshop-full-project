@@ -511,10 +511,58 @@ const deleteAppointment = (id, callback) => {
     );
 };
 
+const updateAppointmentStatus = (
+    id,
+    appointment_status,
+    callback
+) => {
+    const validStatuses = [
+        "scheduled",
+        "completed",
+        "cancelled"
+    ];
+
+    if (!validStatuses.includes(appointment_status)) {
+        const error = new Error(
+            "Status do agendamento inválido"
+        );
+
+        error.statusCode = 400;
+
+        return callback(error);
+    }
+
+    AppointmentModel.getAppointmentById(
+        id,
+        (error, appointments) => {
+            if (error) {
+                return callback(error);
+            }
+
+            if (appointments.length === 0) {
+                const appointmentError = new Error(
+                    "Agendamento não encontrado"
+                );
+
+                appointmentError.statusCode = 404;
+
+                return callback(appointmentError);
+            }
+
+            AppointmentModel.updateAppointmentStatus(
+                id,
+                appointment_status,
+                callback
+            );
+        }
+    );
+};
+
 module.exports = {
     getAllAppointments,
     getAppointmentById,
     createAppointment,
     updateAppointment,
     deleteAppointment,
+    updateAppointmentStatus,
 };

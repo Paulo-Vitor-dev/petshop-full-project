@@ -101,10 +101,36 @@ const deleteAppointment = (req, res) => {
   });
 };
 
+const updateAppointmentStatus = (req, res) => {
+    const { id } = req.params;
+    const { appointment_status } = req.body;
+
+    AppointmentService.updateAppointmentStatus(
+        id,
+        appointment_status,
+        (error) => {
+            if (error) {
+                return res.status(
+                    error.statusCode || 500
+                ).json({
+                    error: error.message,
+                });
+            }
+
+            return res.status(200).json({
+                message: "Status do agendamento atualizado com sucesso",
+                id: Number(id),
+                appointment_status,
+            });
+        }
+    );
+};
+
 module.exports = {
   getAllAppointments,
   getAppointmentById,
   createAppointment,
   updateAppointment,
   deleteAppointment,
+  updateAppointmentStatus,
 };

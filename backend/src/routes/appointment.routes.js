@@ -8,5 +8,9 @@ router.post("/", AppointmentController.createAppointment);
 router.get("/:id", AppointmentController.getAppointmentById);
 router.put("/:id", AppointmentController.updateAppointment);
 router.delete("/:id", AppointmentController.deleteAppointment);
+router.patch(
+    "/:id/status",
+    AppointmentController.updateAppointmentStatus
+);
 
 module.exports = router;

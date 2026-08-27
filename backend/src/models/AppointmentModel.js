@@ -6,6 +6,7 @@ const getAllAppointments = (pagination, callback) => {
             appointments.id,
             appointments.appointment_date,
             appointments.payment_status,
+            appointments.appointment_status,
 
             pets.id AS pet_id,
             pets.name AS pet_name,
@@ -50,6 +51,7 @@ const getFilteredAppointments = (filters, callback) => {
             appointments.id,
             appointments.appointment_date,
             appointments.payment_status,
+            appointments.appointment_status,
 
             pets.id AS pet_id,
             pets.name AS pet_name,
@@ -129,6 +131,7 @@ const getAppointmentById = (id, callback) => {
       appointments.id,
       appointments.appointment_date,
       appointments.payment_status,
+      appointments.appointment_status,
 
       pets.id AS pet_id,
       pets.name AS pet_name,
@@ -203,6 +206,7 @@ const checkPetScheduleConflict = (
     INNER JOIN services
       ON appointments.service_id = services.id
     WHERE appointments.pet_id = ?
+    AND appointments.appointment_status = 'scheduled'
       AND ? < DATE_ADD(
         appointments.appointment_date,
         INTERVAL services.duration MINUTE
@@ -239,6 +243,7 @@ const checkPetScheduleConflictForUpdate = (
             ON appointments.service_id = services.id
         WHERE appointments.pet_id = ?
           AND appointments.id != ?
+          AND appointments.appointment_status = 'scheduled'
           AND ? < DATE_ADD(
               appointments.appointment_date,
               INTERVAL services.duration MINUTE
@@ -289,6 +294,24 @@ const countAppointments = (filters, callback) => {
     connection.query(query, values, callback);
 };
 
+const updateAppointmentStatus = (
+    id,
+    appointment_status,
+    callback
+) => {
+    const query = `
+        UPDATE appointments
+        SET appointment_status = ?
+        WHERE id = ?
+    `;
+
+    connection.query(
+        query,
+        [appointment_status, id],
+        callback
+    );
+};
+
 module.exports = {
   getAllAppointments,
   getAppointmentById,
@@ -299,4 +322,5 @@ module.exports = {
   checkPetScheduleConflictForUpdate,
   getFilteredAppointments,
   countAppointments,
+  updateAppointmentStatus,
 };

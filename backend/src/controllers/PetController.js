@@ -84,10 +84,30 @@ const deletePet = (req, res) => {
   });
 };
 
+const getPetServiceHistory = (req, res) => {
+  const { id } = req.params;
+
+  PetService.getPetServiceHistory(
+    id,
+    (error, result) => {
+      if (error) {
+        return res.status(
+          error.statusCode || 500
+        ).json({
+          error: error.message,
+        });
+      }
+
+      return res.status(200).json(result);
+    }
+  );
+};
+
 module.exports = {
   getAllPets,
   getPetById,
   createPet,
   updatePet,
   deletePet,
+  getPetServiceHistory,
 };

@@ -73,10 +73,44 @@ const deletePet = (id, callback) => {
   });
 };
 
+const getPetServiceHistory = (pet_id, callback) => {
+  PetModel.getPetById(pet_id, (error, pets) => {
+    if (error) {
+      return callback(error);
+    }
+
+    if (pets.length === 0) {
+      const petError = new Error("Pet não encontrado");
+      petError.statusCode = 404;
+
+      return callback(petError);
+    }
+
+    PetModel.getPetServiceHistory(
+      pet_id,
+      (error, history) => {
+        if (error) {
+          return callback(error);
+        }
+
+        return callback(null, {
+          pet: {
+            id: pets[0].id,
+            name: pets[0].name,
+          },
+          total: history.length,
+          history,
+        });
+      }
+    );
+  });
+};
+
 module.exports = {
   getAllPets,
   getPetById,
   createPet,
   updatePet,
   deletePet,
+  getPetServiceHistory,
 };

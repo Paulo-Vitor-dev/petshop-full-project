@@ -506,6 +506,78 @@ const getAppointmentsSummary = (callback) => {
   );
 };
 
+const getRevenueSummary = (filters, callback) => {
+  let query = `
+    SELECT
+      COUNT(*) AS completed_appointments,
+
+      SUM(
+        CASE
+          WHEN payment_status = 'paid' THEN 1
+          ELSE 0
+        END
+      ) AS paid_appointments,
+
+      SUM(
+        CASE
+          WHEN payment_status = 'pending' THEN 1
+          ELSE 0
+        END
+      ) AS pending_appointments,
+
+      COALESCE(SUM(services.price), 0) AS total_revenue,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN appointments.payment_status = 'paid'
+            THEN services.price
+            ELSE 0
+          END
+        ),
+        0
+      ) AS received_revenue,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN appointments.payment_status = 'pending'
+            THEN services.price
+            ELSE 0
+          END
+        ),
+        0
+      ) AS pending_revenue
+
+    FROM appointments
+
+    INNER JOIN services
+      ON appointments.service_id = services.id
+
+    WHERE appointments.appointment_status = 'completed'
+  `;
+
+  const values = [];
+
+  if (filters.start_date) {
+    query += `
+      AND appointments.appointment_date >= ?
+    `;
+
+    values.push(`${filters.start_date} 00:00:00`);
+  }
+
+  if (filters.end_date) {
+    query += `
+      AND appointments.appointment_date <= ?
+    `;
+
+    values.push(`${filters.end_date} 23:59:59`);
+  }
+
+  connection.query(query, values, callback);
+};
+
 module.exports = {
   getAllAppointments,
   getFilteredAppointments,
@@ -520,4 +592,5 @@ module.exports = {
   updatePaymentStatus,
   getDailyAgenda,
   getAppointmentsSummary,
+  getRevenueSummary,
 };

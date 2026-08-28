@@ -167,10 +167,30 @@ const deleteClient = (req, res) => {
 
 };
 
+const getClientServiceHistory = (req, res) => {
+  const { id } = req.params;
+
+  ClientService.getClientServiceHistory(
+    id,
+    (error, result) => {
+      if (error) {
+        return res.status(
+          error.statusCode || 500
+        ).json({
+          error: error.message,
+        });
+      }
+
+      return res.status(200).json(result);
+    }
+  );
+};
+
 module.exports = {
     getAllClients,
     createClient,
     getClientById,
     updateClient,
-    deleteClient
+    deleteClient,
+    getClientServiceHistory,
 };

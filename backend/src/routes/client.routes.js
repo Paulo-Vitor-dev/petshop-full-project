@@ -4,6 +4,10 @@ const router = express.Router();
 const ClientController = require("../controllers/ClientController");
 
 router.get("/", ClientController.getAllClients);
+router.get(
+  "/:id/history",
+  ClientController.getClientServiceHistory
+);
 router.get("/:id", ClientController.getClientById);
 router.post("/", ClientController.createClient);
 router.put("/:id", ClientController.updateClient);

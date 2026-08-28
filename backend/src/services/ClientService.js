@@ -106,10 +106,44 @@ const deleteClient = (id, callback) => {
 
 };
 
+const getClientServiceHistory = (client_id, callback) => {
+  ClientModel.getClientById(client_id, (error, clients) => {
+    if (error) {
+      return callback(error);
+    }
+
+    if (clients.length === 0) {
+      const clientError = new Error("Cliente não encontrado");
+      clientError.statusCode = 404;
+
+      return callback(clientError);
+    }
+
+    ClientModel.getClientServiceHistory(
+      client_id,
+      (error, history) => {
+        if (error) {
+          return callback(error);
+        }
+
+        return callback(null, {
+          client: {
+            id: clients[0].id,
+            name: clients[0].name,
+          },
+          total: history.length,
+          history,
+        });
+      }
+    );
+  });
+};
+
 module.exports = {
     getAllClients,
     createClient,
     getClientById,
     updateClient,
-    deleteClient
+    deleteClient,
+    getClientServiceHistory
 };

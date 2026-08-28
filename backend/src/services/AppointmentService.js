@@ -790,6 +790,73 @@ const getAppointmentsSummary = (callback) => {
     });
 };
 
+const getRevenueSummary = (filters, callback) => {
+  const { start_date, end_date } = filters;
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+  if (start_date && !dateRegex.test(start_date)) {
+    const error = new Error(
+      "A data inicial deve estar no formato YYYY-MM-DD"
+    );
+    error.statusCode = 400;
+
+    return callback(error);
+  }
+
+  if (end_date && !dateRegex.test(end_date)) {
+    const error = new Error(
+      "A data final deve estar no formato YYYY-MM-DD"
+    );
+    error.statusCode = 400;
+
+    return callback(error);
+  }
+
+  if (start_date && end_date && start_date > end_date) {
+    const error = new Error(
+      "A data inicial não pode ser maior que a data final"
+    );
+    error.statusCode = 400;
+
+    return callback(error);
+  }
+
+  AppointmentModel.getRevenueSummary(
+    {
+      start_date,
+      end_date,
+    },
+    (error, results) => {
+      if (error) {
+        return callback(error);
+      }
+
+      const summary = results[0];
+
+      return callback(null, {
+        completed_appointments:
+          Number(summary.completed_appointments) || 0,
+
+        paid_appointments:
+          Number(summary.paid_appointments) || 0,
+
+        pending_appointments:
+          Number(summary.pending_appointments) || 0,
+
+        total_revenue:
+          Number(summary.total_revenue || 0).toFixed(2),
+
+        received_revenue:
+          Number(summary.received_revenue || 0).toFixed(2),
+
+        pending_revenue:
+          Number(summary.pending_revenue || 0).toFixed(2),
+      });
+    }
+  );
+};
+
 module.exports = {
     getAllAppointments,
     getAppointmentById,
@@ -800,4 +867,5 @@ module.exports = {
     updatePaymentStatus,
     getDailyAgenda,
     getAppointmentsSummary,
+    getRevenueSummary,
 };

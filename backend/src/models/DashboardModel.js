@@ -1,41 +1,68 @@
 const connection = require("../config/database");
 
-const getDashboardSummary = (callback) => {
+const getDashboardSummary = (filters, callback) => {
+  const values = [];
+
+  let appointmentDateFilter = "";
+
+  if (filters.start_date) {
+    appointmentDateFilter += `
+      AND appointments.appointment_date >= ?
+    `;
+
+    values.push(`${filters.start_date} 00:00:00`);
+  }
+
+  if (filters.end_date) {
+    appointmentDateFilter += `
+      AND appointments.appointment_date <= ?
+    `;
+
+    values.push(`${filters.end_date} 23:59:59`);
+  }
+
   const query = `
     SELECT
       (
         SELECT COUNT(*)
         FROM appointments
+        WHERE 1 = 1
+        ${appointmentDateFilter}
       ) AS total_appointments,
 
       (
         SELECT COUNT(*)
         FROM appointments
         WHERE appointment_status = 'scheduled'
+        ${appointmentDateFilter}
       ) AS scheduled_appointments,
 
       (
         SELECT COUNT(*)
         FROM appointments
         WHERE appointment_status = 'completed'
+        ${appointmentDateFilter}
       ) AS completed_appointments,
 
       (
         SELECT COUNT(*)
         FROM appointments
         WHERE appointment_status = 'cancelled'
+        ${appointmentDateFilter}
       ) AS cancelled_appointments,
 
       (
         SELECT COUNT(*)
         FROM appointments
         WHERE payment_status = 'pending'
+        ${appointmentDateFilter}
       ) AS pending_payments,
 
       (
         SELECT COUNT(*)
         FROM appointments
         WHERE payment_status = 'paid'
+        ${appointmentDateFilter}
       ) AS paid_payments,
 
       (
@@ -44,6 +71,7 @@ const getDashboardSummary = (callback) => {
         INNER JOIN services
           ON appointments.service_id = services.id
         WHERE appointments.appointment_status = 'completed'
+        ${appointmentDateFilter}
       ) AS total_revenue,
 
       (
@@ -53,6 +81,7 @@ const getDashboardSummary = (callback) => {
           ON appointments.service_id = services.id
         WHERE appointments.appointment_status = 'completed'
           AND appointments.payment_status = 'paid'
+        ${appointmentDateFilter}
       ) AS received_revenue,
 
       (
@@ -62,6 +91,7 @@ const getDashboardSummary = (callback) => {
           ON appointments.service_id = services.id
         WHERE appointments.appointment_status = 'completed'
           AND appointments.payment_status = 'pending'
+        ${appointmentDateFilter}
       ) AS pending_revenue,
 
       (
@@ -80,7 +110,19 @@ const getDashboardSummary = (callback) => {
       ) AS total_services
   `;
 
-  connection.query(query, callback);
+  const queryValues = [];
+
+  const filterOccurrences = 9;
+
+  for (let i = 0; i < filterOccurrences; i++) {
+    queryValues.push(...values);
+  }
+
+  connection.query(
+    query,
+    queryValues,
+    callback
+  );
 };
 
 module.exports = {

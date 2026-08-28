@@ -3,7 +3,13 @@ const DashboardService = require(
 );
 
 const getDashboardSummary = (req, res) => {
+  const filters = {
+    start_date: req.query.start_date,
+    end_date: req.query.end_date,
+  };
+
   DashboardService.getDashboardSummary(
+    filters,
     (error, result) => {
       if (error) {
         return res

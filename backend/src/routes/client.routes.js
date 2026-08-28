@@ -5,6 +5,10 @@ const ClientController = require("../controllers/ClientController");
 
 router.get("/", ClientController.getAllClients);
 router.get(
+  "/ranking",
+  ClientController.getClientsRanking
+);
+router.get(
   "/:id/history",
   ClientController.getClientServiceHistory
 );

@@ -857,6 +857,26 @@ const getRevenueSummary = (filters, callback) => {
   );
 };
 
+const getServiceStats = (callback) => {
+  AppointmentModel.getServiceStats((error, results) => {
+    if (error) {
+      return callback(error);
+    }
+
+    const services = results.map((service) => ({
+      service_id: service.service_id,
+      service_name: service.service_name,
+      appointments: Number(service.appointments),
+      revenue: Number(service.revenue || 0).toFixed(2),
+    }));
+
+    return callback(null, {
+      total_services: services.length,
+      services,
+    });
+  });
+};
+
 module.exports = {
     getAllAppointments,
     getAppointmentById,
@@ -868,4 +888,5 @@ module.exports = {
     getDailyAgenda,
     getAppointmentsSummary,
     getRevenueSummary,
+    getServiceStats,
 };

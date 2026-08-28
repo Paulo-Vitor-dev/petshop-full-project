@@ -578,6 +578,36 @@ const getRevenueSummary = (filters, callback) => {
   connection.query(query, values, callback);
 };
 
+const getServiceStats = (callback) => {
+  const query = `
+    SELECT
+      services.id AS service_id,
+      services.name AS service_name,
+
+      COUNT(appointments.id) AS appointments,
+
+      COALESCE(
+        SUM(services.price),
+        0
+      ) AS revenue
+
+    FROM appointments
+
+    INNER JOIN services
+      ON appointments.service_id = services.id
+
+    WHERE appointments.appointment_status = 'completed'
+
+    GROUP BY
+      services.id,
+      services.name
+
+    ORDER BY appointments DESC, service_name ASC
+  `;
+
+  connection.query(query, callback);
+};
+
 module.exports = {
   getAllAppointments,
   getFilteredAppointments,
@@ -593,4 +623,5 @@ module.exports = {
   getDailyAgenda,
   getAppointmentsSummary,
   getRevenueSummary,
+  getServiceStats,
 };

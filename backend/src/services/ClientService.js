@@ -139,11 +139,73 @@ const getClientServiceHistory = (client_id, callback) => {
   });
 };
 
+const getClientsRanking = (filters, callback) => {
+  const { start_date, end_date } = filters;
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+  if (start_date && !dateRegex.test(start_date)) {
+    const error = new Error(
+      "A data inicial deve estar no formato YYYY-MM-DD"
+    );
+
+    error.statusCode = 400;
+    return callback(error);
+  }
+
+  if (end_date && !dateRegex.test(end_date)) {
+    const error = new Error(
+      "A data final deve estar no formato YYYY-MM-DD"
+    );
+
+    error.statusCode = 400;
+    return callback(error);
+  }
+
+  if (start_date && end_date && start_date > end_date) {
+    const error = new Error(
+      "A data inicial não pode ser maior que a data final"
+    );
+
+    error.statusCode = 400;
+    return callback(error);
+  }
+
+  ClientModel.getClientsRanking(
+    {
+      start_date,
+      end_date,
+    },
+    (error, results) => {
+      if (error) {
+        return callback(error);
+      }
+
+      const ranking = results.map((client, index) => ({
+        position: index + 1,
+        client_id: client.client_id,
+        client_name: client.client_name,
+        appointments: Number(client.appointments) || 0,
+        completed_appointments:
+          Number(client.completed_appointments) || 0,
+        total_spent:
+          Number(client.total_spent || 0).toFixed(2),
+      }));
+
+      return callback(null, {
+        total_clients: ranking.length,
+        ranking,
+      });
+    }
+  );
+};
+
 module.exports = {
     getAllClients,
     createClient,
     getClientById,
     updateClient,
     deleteClient,
-    getClientServiceHistory
+    getClientServiceHistory,
+    getClientsRanking
 };

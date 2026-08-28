@@ -106,12 +106,91 @@ const getClientServiceHistory = (client_id, callback) => {
   );
 };
 
+const getClientsRanking = (filters, callback) => {
+  const values = [];
+
+  let appointmentsJoin = `
+    LEFT JOIN appointments
+      ON appointments.pet_id = pets.id
+  `;
+
+  if (filters.start_date) {
+    appointmentsJoin += `
+      AND appointments.appointment_date >= ?
+    `;
+
+    values.push(`${filters.start_date} 00:00:00`);
+  }
+
+  if (filters.end_date) {
+    appointmentsJoin += `
+      AND appointments.appointment_date <= ?
+    `;
+
+    values.push(`${filters.end_date} 23:59:59`);
+  }
+
+  const query = `
+    SELECT
+      clients.id AS client_id,
+      clients.name AS client_name,
+
+      COUNT(appointments.id) AS appointments,
+
+      SUM(
+        CASE
+          WHEN appointments.appointment_status = 'completed'
+          THEN 1
+          ELSE 0
+        END
+      ) AS completed_appointments,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN appointments.appointment_status = 'completed'
+              AND appointments.payment_status = 'paid'
+            THEN services.price
+            ELSE 0
+          END
+        ),
+        0
+      ) AS total_spent
+
+    FROM clients
+
+    LEFT JOIN pets
+      ON pets.client_id = clients.id
+
+    ${appointmentsJoin}
+
+    LEFT JOIN services
+      ON appointments.service_id = services.id
+
+    GROUP BY
+      clients.id,
+      clients.name
+
+    ORDER BY
+      completed_appointments DESC,
+      total_spent DESC,
+      client_name ASC
+  `;
+
+  connection.query(
+    query,
+    values,
+    callback
+  );
+};
+
 module.exports ={
     getAllClients,    
     createClient,
     getClientById,
     updateClient,
     deleteClient,
-    getClientServiceHistory
+    getClientServiceHistory,
+    getClientsRanking
 };
 

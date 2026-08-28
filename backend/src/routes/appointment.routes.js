@@ -21,6 +21,11 @@ router.get(
 );
 
 router.get(
+  "/service-stats",
+  AppointmentController.getServiceStats
+);
+
+router.get(
     "/agenda",
     AppointmentController.getDailyAgenda
 );

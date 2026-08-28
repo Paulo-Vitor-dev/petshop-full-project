@@ -183,6 +183,28 @@ const getAppointmentsSummary = (req, res) => {
   });
 };
 
+const getRevenueSummary = (req, res) => {
+  const filters = {
+    start_date: req.query.start_date,
+    end_date: req.query.end_date,
+  };
+
+  AppointmentService.getRevenueSummary(
+    filters,
+    (error, summary) => {
+      if (error) {
+        return res
+          .status(error.statusCode || 500)
+          .json({
+            error: error.message,
+          });
+      }
+
+      return res.status(200).json(summary);
+    }
+  );
+};
+
 module.exports = {
   getAllAppointments,
   getAppointmentById,
@@ -193,4 +215,5 @@ module.exports = {
   updatePaymentStatus,
   getDailyAgenda,
   getAppointmentsSummary,
+  getRevenueSummary,
 };

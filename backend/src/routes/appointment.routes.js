@@ -16,6 +16,11 @@ router.get(
 );
 
 router.get(
+  "/revenue",
+  AppointmentController.getRevenueSummary
+);
+
+router.get(
     "/agenda",
     AppointmentController.getDailyAgenda
 );

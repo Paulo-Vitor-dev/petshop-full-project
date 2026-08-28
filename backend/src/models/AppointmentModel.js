@@ -2,38 +2,38 @@ const connection = require("../config/database");
 
 const getAllAppointments = (pagination, callback) => {
   const query = `
-        SELECT
-            appointments.id,
-            appointments.appointment_date,
-            appointments.payment_status,
-            appointments.appointment_status,
+    SELECT
+      appointments.id,
+      appointments.appointment_date,
+      appointments.payment_status,
+      appointments.appointment_status,
 
-            pets.id AS pet_id,
-            pets.name AS pet_name,
+      pets.id AS pet_id,
+      pets.name AS pet_name,
 
-            clients.id AS client_id,
-            clients.name AS client_name,
+      clients.id AS client_id,
+      clients.name AS client_name,
 
-            services.id AS service_id,
-            services.name AS service_name,
-            services.price,
-            services.duration
+      services.id AS service_id,
+      services.name AS service_name,
+      services.price,
+      services.duration
 
-        FROM appointments
+    FROM appointments
 
-        INNER JOIN pets
-            ON appointments.pet_id = pets.id
+    INNER JOIN pets
+      ON appointments.pet_id = pets.id
 
-        INNER JOIN clients
-            ON pets.client_id = clients.id
+    INNER JOIN clients
+      ON pets.client_id = clients.id
 
-        INNER JOIN services
-            ON appointments.service_id = services.id
+    INNER JOIN services
+      ON appointments.service_id = services.id
 
-        ORDER BY appointments.appointment_date ASC
+    ORDER BY appointments.appointment_date ASC
 
-        LIMIT ? OFFSET ?
-    `;
+    LIMIT ? OFFSET ?
+  `;
 
   connection.query(
     query,
@@ -47,71 +47,97 @@ const getAllAppointments = (pagination, callback) => {
 
 const getFilteredAppointments = (filters, callback) => {
   let query = `
-        SELECT
-            appointments.id,
-            appointments.appointment_date,
-            appointments.payment_status,
-            appointments.appointment_status,
+    SELECT
+      appointments.id,
+      appointments.appointment_date,
+      appointments.payment_status,
+      appointments.appointment_status,
 
-            pets.id AS pet_id,
-            pets.name AS pet_name,
+      pets.id AS pet_id,
+      pets.name AS pet_name,
 
-            clients.id AS client_id,
-            clients.name AS client_name,
+      clients.id AS client_id,
+      clients.name AS client_name,
 
-            services.id AS service_id,
-            services.name AS service_name,
-            services.price,
-            services.duration
+      services.id AS service_id,
+      services.name AS service_name,
+      services.price,
+      services.duration
 
-        FROM appointments
+    FROM appointments
 
-        INNER JOIN pets
-            ON appointments.pet_id = pets.id
+    INNER JOIN pets
+      ON appointments.pet_id = pets.id
 
-        INNER JOIN clients
-            ON pets.client_id = clients.id
+    INNER JOIN clients
+      ON pets.client_id = clients.id
 
-        INNER JOIN services
-            ON appointments.service_id = services.id
+    INNER JOIN services
+      ON appointments.service_id = services.id
 
-        WHERE 1 = 1
-    `;
+    WHERE 1 = 1
+  `;
 
   const values = [];
 
   if (filters.date) {
-    query += ` AND DATE(appointments.appointment_date) = ?`;
+    query += `
+      AND DATE(appointments.appointment_date) = ?
+    `;
+
     values.push(filters.date);
   }
 
   if (filters.pet_id) {
-    query += ` AND appointments.pet_id = ?`;
+    query += `
+      AND appointments.pet_id = ?
+    `;
+
     values.push(filters.pet_id);
   }
 
   if (filters.payment_status) {
-    query += ` AND appointments.payment_status = ?`;
+    query += `
+      AND appointments.payment_status = ?
+    `;
+
     values.push(filters.payment_status);
+  }
+
+  if (filters.appointment_status) {
+    query += `
+      AND appointments.appointment_status = ?
+    `;
+
+    values.push(filters.appointment_status);
   }
 
   query += `
     ORDER BY appointments.appointment_date ASC
     LIMIT ? OFFSET ?
-`;
+  `;
 
   values.push(filters.limit);
   values.push(filters.offset);
 
-  connection.query(query, values, callback);
+  connection.query(
+    query,
+    values,
+    callback
+  );
 };
 
 const createAppointment = (appointment, callback) => {
   const query = `
-        INSERT INTO appointments
-        (pet_id, service_id, appointment_date, payment_status)
-        VALUES (?, ?, ?, ?)
-    `;
+    INSERT INTO appointments
+      (
+        pet_id,
+        service_id,
+        appointment_date,
+        payment_status
+      )
+    VALUES (?, ?, ?, ?)
+  `;
 
   connection.query(
     query,
@@ -158,10 +184,18 @@ const getAppointmentById = (id, callback) => {
     WHERE appointments.id = ?
   `;
 
-  connection.query(query, [id], callback);
+  connection.query(
+    query,
+    [id],
+    callback
+  );
 };
 
-const updateAppointment = (id, appointment, callback) => {
+const updateAppointment = (
+  id,
+  appointment,
+  callback
+) => {
   const query = `
     UPDATE appointments
     SET
@@ -191,7 +225,11 @@ const deleteAppointment = (id, callback) => {
     WHERE id = ?
   `;
 
-  connection.query(query, [id], callback);
+  connection.query(
+    query,
+    [id],
+    callback
+  );
 };
 
 const checkPetScheduleConflict = (
@@ -201,16 +239,22 @@ const checkPetScheduleConflict = (
   callback
 ) => {
   const query = `
-    SELECT appointments.id
+    SELECT
+      appointments.id
+
     FROM appointments
+
     INNER JOIN services
       ON appointments.service_id = services.id
+
     WHERE appointments.pet_id = ?
-    AND appointments.appointment_status = 'scheduled'
+      AND appointments.appointment_status = 'scheduled'
+
       AND ? < DATE_ADD(
         appointments.appointment_date,
         INTERVAL services.duration MINUTE
       )
+
       AND DATE_ADD(
         ?,
         INTERVAL ? MINUTE
@@ -237,22 +281,28 @@ const checkPetScheduleConflictForUpdate = (
   callback
 ) => {
   const query = `
-        SELECT appointments.id
-        FROM appointments
-        INNER JOIN services
-            ON appointments.service_id = services.id
-        WHERE appointments.pet_id = ?
-          AND appointments.id != ?
-          AND appointments.appointment_status = 'scheduled'
-          AND ? < DATE_ADD(
-              appointments.appointment_date,
-              INTERVAL services.duration MINUTE
-          )
-          AND DATE_ADD(
-              ?,
-              INTERVAL ? MINUTE
-          ) > appointments.appointment_date
-    `;
+    SELECT
+      appointments.id
+
+    FROM appointments
+
+    INNER JOIN services
+      ON appointments.service_id = services.id
+
+    WHERE appointments.pet_id = ?
+      AND appointments.id != ?
+      AND appointments.appointment_status = 'scheduled'
+
+      AND ? < DATE_ADD(
+        appointments.appointment_date,
+        INTERVAL services.duration MINUTE
+      )
+
+      AND DATE_ADD(
+        ?,
+        INTERVAL ? MINUTE
+      ) > appointments.appointment_date
+  `;
 
   connection.query(
     query,
@@ -268,108 +318,138 @@ const checkPetScheduleConflictForUpdate = (
 };
 
 const countAppointments = (filters, callback) => {
-    let query = `
-        SELECT COUNT(*) AS total
-        FROM appointments
-        WHERE 1 = 1
+  let query = `
+    SELECT
+      COUNT(*) AS total
+
+    FROM appointments
+
+    WHERE 1 = 1
+  `;
+
+  const values = [];
+
+  if (filters.date) {
+    query += `
+      AND DATE(appointments.appointment_date) = ?
     `;
 
-    const values = [];
+    values.push(filters.date);
+  }
 
-    if (filters.date) {
-        query += ` AND DATE(appointments.appointment_date) = ?`;
-        values.push(filters.date);
-    }
+  if (filters.pet_id) {
+    query += `
+      AND appointments.pet_id = ?
+    `;
 
-    if (filters.pet_id) {
-        query += ` AND appointments.pet_id = ?`;
-        values.push(filters.pet_id);
-    }
+    values.push(filters.pet_id);
+  }
 
-    if (filters.payment_status) {
-        query += ` AND appointments.payment_status = ?`;
-        values.push(filters.payment_status);
-    }
+  if (filters.payment_status) {
+    query += `
+      AND appointments.payment_status = ?
+    `;
 
-    connection.query(query, values, callback);
+    values.push(filters.payment_status);
+  }
+
+  if (filters.appointment_status) {
+    query += `
+      AND appointments.appointment_status = ?
+    `;
+
+    values.push(filters.appointment_status);
+  }
+
+  connection.query(
+    query,
+    values,
+    callback
+  );
 };
 
 const updateAppointmentStatus = (
-    id,
-    appointment_status,
-    callback
+  id,
+  appointment_status,
+  callback
 ) => {
-    const query = `
-        UPDATE appointments
-        SET appointment_status = ?
-        WHERE id = ?
-    `;
+  const query = `
+    UPDATE appointments
+    SET appointment_status = ?
+    WHERE id = ?
+  `;
 
-    connection.query(
-        query,
-        [appointment_status, id],
-        callback
-    );
+  connection.query(
+    query,
+    [
+      appointment_status,
+      id,
+    ],
+    callback
+  );
 };
 
 const updatePaymentStatus = (
-    id,
-    payment_status,
-    callback
+  id,
+  payment_status,
+  callback
 ) => {
-    const query = `
-        UPDATE appointments
-        SET payment_status = ?
-        WHERE id = ?
-    `;
+  const query = `
+    UPDATE appointments
+    SET payment_status = ?
+    WHERE id = ?
+  `;
 
-    connection.query(
-        query,
-        [payment_status, id],
-        callback
-    );
+  connection.query(
+    query,
+    [
+      payment_status,
+      id,
+    ],
+    callback
+  );
 };
 
 const getDailyAgenda = (date, callback) => {
-    const query = `
-        SELECT
-            appointments.id,
-            appointments.appointment_date,
-            appointments.payment_status,
-            appointments.appointment_status,
+  const query = `
+    SELECT
+      appointments.id,
+      appointments.appointment_date,
+      appointments.payment_status,
+      appointments.appointment_status,
 
-            pets.id AS pet_id,
-            pets.name AS pet_name,
+      pets.id AS pet_id,
+      pets.name AS pet_name,
 
-            clients.id AS client_id,
-            clients.name AS client_name,
+      clients.id AS client_id,
+      clients.name AS client_name,
 
-            services.id AS service_id,
-            services.name AS service_name,
-            services.price,
-            services.duration
+      services.id AS service_id,
+      services.name AS service_name,
+      services.price,
+      services.duration
 
-        FROM appointments
+    FROM appointments
 
-        INNER JOIN pets
-            ON appointments.pet_id = pets.id
+    INNER JOIN pets
+      ON appointments.pet_id = pets.id
 
-        INNER JOIN clients
-            ON pets.client_id = clients.id
+    INNER JOIN clients
+      ON pets.client_id = clients.id
 
-        INNER JOIN services
-            ON appointments.service_id = services.id
+    INNER JOIN services
+      ON appointments.service_id = services.id
 
-        WHERE DATE(appointments.appointment_date) = ?
+    WHERE DATE(appointments.appointment_date) = ?
 
-        ORDER BY appointments.appointment_date ASC
-    `;
+    ORDER BY appointments.appointment_date ASC
+  `;
 
-    connection.query(
-        query,
-        [date],
-        callback
-    );
+  connection.query(
+    query,
+    [date],
+    callback
+  );
 };
 
 const getAppointmentsSummary = (callback) => {
@@ -379,35 +459,40 @@ const getAppointmentsSummary = (callback) => {
 
       SUM(
         CASE
-          WHEN appointment_status = 'scheduled' THEN 1
+          WHEN appointment_status = 'scheduled'
+          THEN 1
           ELSE 0
         END
       ) AS scheduled,
 
       SUM(
         CASE
-          WHEN appointment_status = 'completed' THEN 1
+          WHEN appointment_status = 'completed'
+          THEN 1
           ELSE 0
         END
       ) AS completed,
 
       SUM(
         CASE
-          WHEN appointment_status = 'cancelled' THEN 1
+          WHEN appointment_status = 'cancelled'
+          THEN 1
           ELSE 0
         END
       ) AS cancelled,
 
       SUM(
         CASE
-          WHEN payment_status = 'pending' THEN 1
+          WHEN payment_status = 'pending'
+          THEN 1
           ELSE 0
         END
       ) AS payment_pending,
 
       SUM(
         CASE
-          WHEN payment_status = 'paid' THEN 1
+          WHEN payment_status = 'paid'
+          THEN 1
           ELSE 0
         END
       ) AS payment_paid
@@ -415,18 +500,21 @@ const getAppointmentsSummary = (callback) => {
     FROM appointments
   `;
 
-  connection.query(query, callback);
+  connection.query(
+    query,
+    callback
+  );
 };
 
 module.exports = {
   getAllAppointments,
+  getFilteredAppointments,
   getAppointmentById,
   createAppointment,
   updateAppointment,
   deleteAppointment,
   checkPetScheduleConflict,
   checkPetScheduleConflictForUpdate,
-  getFilteredAppointments,
   countAppointments,
   updateAppointmentStatus,
   updatePaymentStatus,

@@ -5,6 +5,7 @@ const getAllAppointments = (req, res) => {
     date: req.query.date,
     pet_id: req.query.pet_id,
     payment_status: req.query.payment_status,
+    appointment_status: req.query.appointment_status,
     page: req.query.page,
     limit: req.query.limit,
   };

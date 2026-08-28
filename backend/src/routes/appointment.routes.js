@@ -21,6 +21,11 @@ router.get(
 );
 
 router.get(
+  "/monthly-revenue",
+  AppointmentController.getMonthlyRevenue
+);
+
+router.get(
   "/service-stats",
   AppointmentController.getServiceStats
 );

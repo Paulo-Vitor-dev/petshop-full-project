@@ -221,6 +221,25 @@ const getServiceStats = (req, res) => {
   );
 };
 
+const getMonthlyRevenue = (req, res) => {
+  const { year } = req.query;
+
+  AppointmentService.getMonthlyRevenue(
+    year,
+    (error, result) => {
+      if (error) {
+        return res
+          .status(error.statusCode || 500)
+          .json({
+            error: error.message,
+          });
+      }
+
+      return res.status(200).json(result);
+    }
+  );
+};
+
 module.exports = {
   getAllAppointments,
   getAppointmentById,
@@ -233,4 +252,5 @@ module.exports = {
   getAppointmentsSummary,
   getRevenueSummary,
   getServiceStats,
+  getMonthlyRevenue,
 };

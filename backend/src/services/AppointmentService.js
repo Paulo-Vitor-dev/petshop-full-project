@@ -877,6 +877,62 @@ const getServiceStats = (callback) => {
   });
 };
 
+const getMonthlyRevenue = (year, callback) => {
+  if (!year) {
+    const error = new Error(
+      "O ano é obrigatório"
+    );
+
+    error.statusCode = 400;
+    return callback(error);
+  }
+
+  const numericYear = Number(year);
+
+  if (
+    !Number.isInteger(numericYear) ||
+    numericYear < 2000 ||
+    numericYear > 2100
+  ) {
+    const error = new Error(
+      "Ano inválido"
+    );
+
+    error.statusCode = 400;
+    return callback(error);
+  }
+
+  AppointmentModel.getMonthlyRevenue(
+    numericYear,
+    (error, results) => {
+      if (error) {
+        return callback(error);
+      }
+
+      const months = Array.from(
+        { length: 12 },
+        (_, index) => ({
+          month: index + 1,
+          revenue: "0.00",
+        })
+      );
+
+      results.forEach((item) => {
+        const monthIndex =
+          Number(item.month) - 1;
+
+        months[monthIndex].revenue =
+          Number(item.revenue || 0).toFixed(2);
+      });
+
+      return callback(null, {
+        year: numericYear,
+        months,
+      });
+    }
+  );
+};
+
 module.exports = {
     getAllAppointments,
     getAppointmentById,
@@ -889,4 +945,5 @@ module.exports = {
     getAppointmentsSummary,
     getRevenueSummary,
     getServiceStats,
+    getMonthlyRevenue,
 };

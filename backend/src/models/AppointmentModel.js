@@ -608,6 +608,42 @@ const getServiceStats = (callback) => {
   connection.query(query, callback);
 };
 
+const getMonthlyRevenue = (year, callback) => {
+  const query = `
+    SELECT
+      MONTH(appointments.appointment_date) AS month,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN appointments.appointment_status = 'completed'
+              AND appointments.payment_status = 'paid'
+            THEN services.price
+            ELSE 0
+          END
+        ),
+        0
+      ) AS revenue
+
+    FROM appointments
+
+    INNER JOIN services
+      ON appointments.service_id = services.id
+
+    WHERE YEAR(appointments.appointment_date) = ?
+
+    GROUP BY MONTH(appointments.appointment_date)
+
+    ORDER BY month ASC
+  `;
+
+  connection.query(
+    query,
+    [year],
+    callback
+  );
+};
+
 module.exports = {
   getAllAppointments,
   getFilteredAppointments,
@@ -624,4 +660,5 @@ module.exports = {
   getAppointmentsSummary,
   getRevenueSummary,
   getServiceStats,
+  getMonthlyRevenue,
 };

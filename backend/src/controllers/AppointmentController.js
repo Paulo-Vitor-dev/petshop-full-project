@@ -170,6 +170,18 @@ const getDailyAgenda = (req, res) => {
     );
 };
 
+const getAppointmentsSummary = (req, res) => {
+  AppointmentService.getAppointmentsSummary((error, summary) => {
+    if (error) {
+      return res.status(error.statusCode || 500).json({
+        error: error.message,
+      });
+    }
+
+    return res.status(200).json(summary);
+  });
+};
+
 module.exports = {
   getAllAppointments,
   getAppointmentById,
@@ -179,4 +191,5 @@ module.exports = {
   updateAppointmentStatus,
   updatePaymentStatus,
   getDailyAgenda,
+  getAppointmentsSummary,
 };

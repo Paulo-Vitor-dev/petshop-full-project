@@ -752,6 +752,28 @@ const getDailyAgenda = (date, callback) => {
     );
 };
 
+const getAppointmentsSummary = (callback) => {
+  AppointmentModel.getAppointmentsSummary((error, results) => {
+    if (error) {
+      return callback(error);
+    }
+
+    const summary = results[0];
+
+    return callback(null, {
+      total: Number(summary.total),
+      scheduled: Number(summary.scheduled),
+      completed: Number(summary.completed),
+      cancelled: Number(summary.cancelled),
+
+      payments: {
+        pending: Number(summary.payment_pending),
+        paid: Number(summary.payment_paid),
+      },
+    });
+  });
+};
+
 module.exports = {
     getAllAppointments,
     getAppointmentById,
@@ -761,4 +783,5 @@ module.exports = {
     updateAppointmentStatus,
     updatePaymentStatus,
     getDailyAgenda,
+    getAppointmentsSummary,
 };

@@ -372,6 +372,52 @@ const getDailyAgenda = (date, callback) => {
     );
 };
 
+const getAppointmentsSummary = (callback) => {
+  const query = `
+    SELECT
+      COUNT(*) AS total,
+
+      SUM(
+        CASE
+          WHEN appointment_status = 'scheduled' THEN 1
+          ELSE 0
+        END
+      ) AS scheduled,
+
+      SUM(
+        CASE
+          WHEN appointment_status = 'completed' THEN 1
+          ELSE 0
+        END
+      ) AS completed,
+
+      SUM(
+        CASE
+          WHEN appointment_status = 'cancelled' THEN 1
+          ELSE 0
+        END
+      ) AS cancelled,
+
+      SUM(
+        CASE
+          WHEN payment_status = 'pending' THEN 1
+          ELSE 0
+        END
+      ) AS payment_pending,
+
+      SUM(
+        CASE
+          WHEN payment_status = 'paid' THEN 1
+          ELSE 0
+        END
+      ) AS payment_paid
+
+    FROM appointments
+  `;
+
+  connection.query(query, callback);
+};
+
 module.exports = {
   getAllAppointments,
   getAppointmentById,
@@ -385,4 +431,5 @@ module.exports = {
   updateAppointmentStatus,
   updatePaymentStatus,
   getDailyAgenda,
+  getAppointmentsSummary,
 };

@@ -1,27 +1,27 @@
 const connection = require("../config/database");
 
 const getDashboardSummary = (filters, callback) => {
-  const values = [];
+    const values = [];
 
-  let appointmentDateFilter = "";
+    let appointmentDateFilter = "";
 
-  if (filters.start_date) {
-    appointmentDateFilter += `
+    if (filters.start_date) {
+        appointmentDateFilter += `
       AND appointments.appointment_date >= ?
     `;
 
-    values.push(`${filters.start_date} 00:00:00`);
-  }
+        values.push(`${filters.start_date} 00:00:00`);
+    }
 
-  if (filters.end_date) {
-    appointmentDateFilter += `
+    if (filters.end_date) {
+        appointmentDateFilter += `
       AND appointments.appointment_date <= ?
     `;
 
-    values.push(`${filters.end_date} 23:59:59`);
-  }
+        values.push(`${filters.end_date} 23:59:59`);
+    }
 
-  const query = `
+    const query = `
     SELECT
       (
         SELECT COUNT(*)
@@ -110,21 +110,66 @@ const getDashboardSummary = (filters, callback) => {
       ) AS total_services
   `;
 
-  const queryValues = [];
+    const queryValues = [];
 
-  const filterOccurrences = 9;
+    const filterOccurrences = 9;
 
-  for (let i = 0; i < filterOccurrences; i++) {
-    queryValues.push(...values);
-  }
+    for (let i = 0; i < filterOccurrences; i++) {
+        queryValues.push(...values);
+    }
 
-  connection.query(
-    query,
-    queryValues,
-    callback
-  );
+    connection.query(
+        query,
+        queryValues,
+        callback
+    );
+};
+
+const getUpcomingAppointments = (limit, callback) => {
+    const query = `
+    SELECT
+      appointments.id,
+      appointments.appointment_date,
+      appointments.payment_status,
+      appointments.appointment_status,
+
+      pets.id AS pet_id,
+      pets.name AS pet_name,
+
+      clients.id AS client_id,
+      clients.name AS client_name,
+
+      services.id AS service_id,
+      services.name AS service_name,
+      services.duration
+
+    FROM appointments
+
+    INNER JOIN pets
+      ON appointments.pet_id = pets.id
+
+    INNER JOIN clients
+      ON pets.client_id = clients.id
+
+    INNER JOIN services
+      ON appointments.service_id = services.id
+
+    WHERE appointments.appointment_status = 'scheduled'
+      AND appointments.appointment_date >= NOW()
+
+    ORDER BY appointments.appointment_date ASC
+
+    LIMIT ?
+  `;
+
+    connection.query(
+        query,
+        [limit],
+        callback
+    );
 };
 
 module.exports = {
-  getDashboardSummary,
+    getDashboardSummary,
+    getUpcomingAppointments,
 };

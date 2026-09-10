@@ -44,102 +44,118 @@ const getDashboardSummary = (filters, callback) => {
 
       const summary = results[0];
 
-      DashboardModel.getUpcomingAppointments(
-        5,
-        (error, upcomingAppointments) => {
+      DashboardModel.getTodayAppointments(
+        (error, todayAppointments) => {
           if (error) {
             return callback(error);
           }
 
-          const upcoming = upcomingAppointments.map(
-            (appointment) => ({
-              id: appointment.id,
-              appointment_date:
-                appointment.appointment_date,
+          DashboardModel.getUpcomingAppointments(
+            5,
+            (error, upcomingAppointments) => {
+              if (error) {
+                return callback(error);
+              }
 
-              pet: {
-                id: appointment.pet_id,
-                name: appointment.pet_name,
-              },
+              const formatAppointment = (appointment) => ({
+                id: appointment.id,
+                appointment_date:
+                  appointment.appointment_date,
 
-              client: {
-                id: appointment.client_id,
-                name: appointment.client_name,
-              },
+                pet: {
+                  id: appointment.pet_id,
+                  name: appointment.pet_name,
+                },
 
-              service: {
-                id: appointment.service_id,
-                name: appointment.service_name,
-                duration: appointment.duration,
-              },
+                client: {
+                  id: appointment.client_id,
+                  name: appointment.client_name,
+                },
 
-              payment_status:
-                appointment.payment_status,
+                service: {
+                  id: appointment.service_id,
+                  name: appointment.service_name,
+                  duration: appointment.duration,
+                },
 
-              appointment_status:
-                appointment.appointment_status,
-            })
+                payment_status:
+                  appointment.payment_status,
+
+                appointment_status:
+                  appointment.appointment_status,
+              });
+
+              const today = todayAppointments.map(
+                formatAppointment
+              );
+
+              const upcoming = upcomingAppointments.map(
+                formatAppointment
+              );
+
+              return callback(null, {
+                period: {
+                  start_date: start_date || null,
+                  end_date: end_date || null,
+                },
+
+                appointments: {
+                  total:
+                    Number(summary.total_appointments) || 0,
+
+                  scheduled:
+                    Number(summary.scheduled_appointments) || 0,
+
+                  completed:
+                    Number(summary.completed_appointments) || 0,
+
+                  cancelled:
+                    Number(summary.cancelled_appointments) || 0,
+                },
+
+                payments: {
+                  pending:
+                    Number(summary.pending_payments) || 0,
+
+                  paid:
+                    Number(summary.paid_payments) || 0,
+                },
+
+                revenue: {
+                  total: Number(
+                    summary.total_revenue || 0
+                  ).toFixed(2),
+
+                  received: Number(
+                    summary.received_revenue || 0
+                  ).toFixed(2),
+
+                  pending: Number(
+                    summary.pending_revenue || 0
+                  ).toFixed(2),
+                },
+
+                clients: {
+                  total:
+                    Number(summary.total_clients) || 0,
+                },
+
+                pets: {
+                  total:
+                    Number(summary.total_pets) || 0,
+                },
+
+                services: {
+                  total:
+                    Number(summary.total_services) || 0,
+                },
+
+                today_appointments: today,
+
+                upcoming_appointments: upcoming,
+              });
+            }
           );
-
-          return callback(null, {
-            period: {
-              start_date: start_date || null,
-              end_date: end_date || null,
-            },
-
-            appointments: {
-              total:
-                Number(summary.total_appointments) || 0,
-
-              scheduled:
-                Number(summary.scheduled_appointments) || 0,
-
-              completed:
-                Number(summary.completed_appointments) || 0,
-
-              cancelled:
-                Number(summary.cancelled_appointments) || 0,
-            },
-
-            payments: {
-              pending:
-                Number(summary.pending_payments) || 0,
-
-              paid:
-                Number(summary.paid_payments) || 0,
-            },
-
-            revenue: {
-              total: Number(
-                summary.total_revenue || 0
-              ).toFixed(2),
-
-              received: Number(
-                summary.received_revenue || 0
-              ).toFixed(2),
-
-              pending: Number(
-                summary.pending_revenue || 0
-              ).toFixed(2),
-            },
-
-            clients: {
-              total:
-                Number(summary.total_clients) || 0,
-            },
-
-            pets: {
-              total:
-                Number(summary.total_pets) || 0,
-            },
-
-            services: {
-              total:
-                Number(summary.total_services) || 0,
-            },
-
-            upcoming_appointments: upcoming,
-          });
         }
       );
     }

@@ -169,7 +169,46 @@ const getUpcomingAppointments = (limit, callback) => {
     );
 };
 
+const getTodayAppointments = (callback) => {
+  const query = `
+    SELECT
+      appointments.id,
+      appointments.appointment_date,
+      appointments.payment_status,
+      appointments.appointment_status,
+
+      pets.id AS pet_id,
+      pets.name AS pet_name,
+
+      clients.id AS client_id,
+      clients.name AS client_name,
+
+      services.id AS service_id,
+      services.name AS service_name,
+      services.duration
+
+    FROM appointments
+
+    INNER JOIN pets
+      ON appointments.pet_id = pets.id
+
+    INNER JOIN clients
+      ON pets.client_id = clients.id
+
+    INNER JOIN services
+      ON appointments.service_id = services.id
+
+    WHERE DATE(appointments.appointment_date) = CURDATE()
+      AND appointments.appointment_status = 'scheduled'
+
+    ORDER BY appointments.appointment_date ASC
+  `;
+
+  connection.query(query, callback);
+};
+
 module.exports = {
     getDashboardSummary,
     getUpcomingAppointments,
+    getTodayAppointments,
 };
